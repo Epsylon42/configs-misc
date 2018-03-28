@@ -1,0 +1,103 @@
+if [[ $USER != root ]]; then
+    if which xmms2 > /dev/null; then
+        if [[ "$(xmms2 current -f '${playback_status}')" == "Playing" ]]; then
+            xmms2_hidden=false
+        else
+            xmms2_hidden=true
+        fi
+
+        xmh () {
+            xmms2_hidden=true
+        }
+
+        xms () {
+            xmms2_hidden=false
+        }
+
+        prompt_zsh_xmms2 () {
+            local state="$(xmms2 current -f '${playback_status}')"
+
+            if [[ "$state" == Playing ]]; then
+                xms
+            fi
+
+            if [[ $xmms2_hidden == true ]]; then
+                return
+            fi
+
+            local artist="$(xmms2 current -f '${artist}')"
+            local title="$(xmms2 current -f '${title}')"
+            if [ -n "$artist" ]; then
+                str="$artist :: $title"
+            else
+                str="$title"
+            fi
+
+            if [[ "$state" == Playing ]]; then
+                echo -n " $str"
+            elif [[ "$state" == Paused ]]; then
+                echo -n " $str"
+            else
+                echo -n ""
+            fi
+        }
+
+        POWERLEVEL9K_CUSTOM_XMMS2="prompt_zsh_xmms2"
+        POWERLEVEL9K_CUSTOM_XMMS2_BACKGROUND="black"
+        POWERLEVEL9K_CUSTOM_XMMS2_FOREGROUND="blue"
+    fi
+
+    lang_hidden=false
+
+    langs () {
+        lang_hidden=false
+    }
+
+    langh () {
+        lang_hidden=true
+    }
+
+    prompt_zsh_lang_icon () {
+        if [[ $lang_hidden == true ]]; then
+            return;
+        fi
+
+        if [ -d ./src ]; then
+            local dir="./src"
+        elif [[ "${PWD#*/src*}" != "$PWD" ]]; then
+            local dir="${PWD%*/src*}/src"
+        fi
+
+        local arg="$dir $(fd -tf -d1)"
+        if [[ "$arg" != " " ]]; then
+            local data="$(echo $arg | xargs tokei 2>/dev/null)"
+        fi
+
+        detect() {
+            if echo $data | grep -i "\b$1\b" >/dev/null; then
+                echo "$2 "
+            fi
+        }
+
+        local rust=$(detect rust "")
+        local c=$(detect c "")
+        local cpp=$(detect c++ "")
+        local haskell=$(detect haskell "")
+        local python=$(detect python "")
+        local go=$(detect go "")
+        local js=$(detect javascript "")
+        local java=$(detect java "")
+        local ruby=$(detect ruby "")
+        local shell=$(detect shell "")
+        local perl=$(detect perl "pl")
+        local swift=$(detect swift "")
+        local html=$(detect html "")
+
+        local str="$c$cpp$rust$haskell$python$go$js$java$ruby$shell$perl$swift$html"
+
+        echo -n ${str%% }
+    }
+    POWERLEVEL9K_CUSTOM_LANG_ICON="prompt_zsh_lang_icon"
+    POWERLEVEL9K_CUSTOM_LANG_ICON_BACKGROUND="black"
+    POWERLEVEL9K_CUSTOM_LANG_ICON_FOREGROUND="white"
+fi
